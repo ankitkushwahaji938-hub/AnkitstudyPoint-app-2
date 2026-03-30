@@ -229,6 +229,41 @@ export default function App() {
                 Retry Connection
               </button>
             </motion.div>
+          ) : activeTab === 'youtube' ? (
+            <motion.div 
+              key="youtube-tab"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="absolute inset-0 flex flex-col items-center justify-center p-6 bg-white text-center"
+            >
+              <div className="w-24 h-24 bg-red-50 rounded-full flex items-center justify-center mb-6">
+                <Youtube className="w-12 h-12 text-red-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800">Watch on YouTube</h2>
+              <p className="text-gray-500 mt-2 max-w-xs">
+                YouTube blocks direct embedding of channel pages for security. Click below to watch our latest educational videos.
+              </p>
+              <a 
+                href={YOUTUBE_RAW_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-8 px-8 py-4 bg-red-600 text-white rounded-2xl font-bold shadow-lg shadow-red-100 flex items-center gap-3 hover:bg-red-700 transition-all"
+              >
+                <Youtube className="w-6 h-6" />
+                Open @rxvibeak
+              </a>
+              <div className="mt-12 grid grid-cols-2 gap-4 w-full max-w-md">
+                <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                  <p className="text-xs font-bold text-gray-400 uppercase">Subscribers</p>
+                  <p className="text-lg font-bold text-gray-800">Join Us</p>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                  <p className="text-xs font-bold text-gray-400 uppercase">Content</p>
+                  <p className="text-lg font-bold text-gray-800">Pharma Tips</p>
+                </div>
+              </div>
+            </motion.div>
           ) : activeTab === 'tools' ? (
             <motion.div 
               key="tools-grid"

@@ -17,33 +17,44 @@ A modern, fast, and mobile-friendly educational application for pharmacy student
 - **Animations:** Framer Motion
 - **Mobile Wrapper:** Capacitor
 
-## How to Build the APK
+## How to Build the APK & Use on GitHub
 
-### 1. Prerequisites
+### 1. GitHub Usage
+- This is a **React + Capacitor** project.
+- To see the live app on GitHub, you must use **GitHub Actions** to deploy to **GitHub Pages**, or simply download the code and run it locally.
+- The "App not opening" on GitHub is usually because GitHub doesn't run React code automatically. You need to build it first.
+
+### 2. Prerequisites
 - Node.js installed
 - Android Studio installed
 - Java Development Kit (JDK) 17+
 
-### 2. Setup Project
+### 3. Setup Project
 ```bash
+# Install dependencies
 npm install
+
+# Build the web project
 npm run build
 ```
 
-### 3. Add Android Platform
+### 4. Add Android Platform
 ```bash
+# Add the android folder
 npx cap add android
-```
 
-### 4. Sync Project
-```bash
+# Sync the web code to the android folder
 npx cap sync
 ```
 
-### 5. Build APK
+### 5. Build APK in Android Studio
 - Open the `android` folder in Android Studio.
+- Wait for Gradle to sync.
 - Go to **Build > Build Bundle(s) / APK(s) > Build APK(s)**.
-- The APK will be generated in `android/app/build/outputs/apk/debug/app-debug.apk`.
+- The APK will be in `android/app/build/outputs/apk/debug/app-debug.apk`.
+
+## YouTube Note
+YouTube blocks embedding full channel pages in iframes. The app now includes a direct "Open in YouTube" button for the best user experience.
 
 ## Deployment
 You can deploy the web version to any static hosting (Netlify, Vercel, Firebase Hosting) or use it as a PWA.
