@@ -55,6 +55,8 @@ export default function App() {
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [progress, setProgress] = useState(0);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallBtn, setShowInstallBtn] = useState(false);
   
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -67,8 +69,29 @@ export default function App() {
     window.addEventListener('online', () => setIsOffline(false));
     window.addEventListener('offline', () => setIsOffline(true));
 
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBtn(true);
+    });
+
+    window.addEventListener('appinstalled', () => {
+      setShowInstallBtn(false);
+      setDeferredPrompt(null);
+    });
+
     return () => clearTimeout(timer);
   }, []);
+
+  const handleInstall = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setShowInstallBtn(false);
+    }
+    setDeferredPrompt(null);
+  };
 
   // Handle URL changes based on tab
   useEffect(() => {
@@ -182,6 +205,15 @@ export default function App() {
           </h1>
         </div>
         <div className="flex items-center gap-3">
+          {showInstallBtn && (
+            <button 
+              onClick={handleInstall}
+              className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-full shadow-md hover:bg-blue-700 transition-all"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Install App
+            </button>
+          )}
           <button onClick={toggleBookmark} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
             <Star className={cn("w-5 h-5", bookmarks.find(b => b.url === currentUrl) ? "fill-yellow-400 text-yellow-400" : "text-gray-500")} />
           </button>
