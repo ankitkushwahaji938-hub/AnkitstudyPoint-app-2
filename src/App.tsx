@@ -205,6 +205,17 @@ export default function App() {
           </h1>
         </div>
         <div className="flex items-center gap-3">
+          <button 
+            onClick={() => {
+              setCurrentUrl(BLOG_URL);
+              setActiveTab('home');
+              if (iframeRef.current) iframeRef.current.src = BLOG_URL;
+            }}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            title="Go to Home"
+          >
+            <RotateCcw className="w-5 h-5 text-gray-500" />
+          </button>
           {showInstallBtn && (
             <button 
               onClick={handleInstall}

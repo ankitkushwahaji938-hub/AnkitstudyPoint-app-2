@@ -17,12 +17,20 @@ A modern, fast, and mobile-friendly educational application for pharmacy student
 - **Animations:** Framer Motion
 - **Mobile Wrapper:** Capacitor
 
-## How to Build the APK & Use on GitHub
+## Important: GitHub Pages & Python
+- **GitHub Pages does NOT support Python.** It only supports static files (HTML, CSS, JavaScript).
+- This app is built using **React (JavaScript)**, which is perfectly supported by GitHub.
+- You do **not** need a `service.js` file manually; the build process (`npm run build`) creates a `sw.js` (Service Worker) automatically for the "Install" feature.
 
-### 1. GitHub Usage
-- This is a **React + Capacitor** project.
-- To see the live app on GitHub, you must use **GitHub Actions** to deploy to **GitHub Pages**, or simply download the code and run it locally.
-- The "App not opening" on GitHub is usually because GitHub doesn't run React code automatically. You need to build it first.
+## GitHub Deployment Checklist
+To make the app work on your link:
+1. **Build the app:** Run `npm run build`.
+2. **The `dist` folder:** After building, a folder named `dist` is created.
+3. **Upload `dist` contents:** You must upload the **contents** of the `dist` folder to your GitHub repository.
+4. **Base Path:** I have already set the base path to `/AnkitstudyPoint-app-2/` in `vite.config.ts`. Ensure your repository name matches this exactly.
+
+## Why did a "Temple" site open?
+The "Sora Templates" site you saw is likely a link or redirect inside your Blogger template. I have added a **"Home Reset" (Rotate icon)** button in the top header. If you ever get lost or a different site opens, just click that button to return to your main blog immediately.
 
 ### 2. Prerequisites
 - Node.js installed
