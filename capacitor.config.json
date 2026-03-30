@@ -1,0 +1,6 @@
+{
+  "appId": "com.ankitstudypoint.app",
+  "appName": "Ankit Study Point",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}
