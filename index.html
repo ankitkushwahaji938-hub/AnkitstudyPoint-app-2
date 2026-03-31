@@ -1,15 +1,452 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#2563eb" />
-    <link rel="manifest" href="/AnkitstudyPoint-app-2/manifest.webmanifest" />
-    <title>Ankit Study Point</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+<!DOCTYPE html>
+<html lang="hi" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#2563eb" />
+  <meta name="description" content="Ankit Study Point – D Pharma & B Pharma Notes, Study Tools, Pharmacy Education" />
+  <meta name="author" content="Ankit Kushwaha" />
 
+  <!-- PWA Meta -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Ankit Study Point" />
+
+  <title>Ankit Study Point</title>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: '#2563eb',
+            accent: '#00b894',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- React & Framer Motion CDN -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+  <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+
+  <style>
+    body { font-family: 'Nunito', sans-serif; -webkit-tap-highlight-color: transparent; }
+    h1, h2, h3 { font-family: 'Poppins', sans-serif; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    /* Splash Animation */
+    @keyframes splashPop { from { opacity:0; transform: scale(0.5); } to { opacity:1; transform: scale(1); } }
+    @keyframes loaderFill { to { width: 100%; } }
+    .splash-pop { animation: splashPop 0.8s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+    .loader-fill { animation: loaderFill 2.5s ease forwards; }
+  </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 overflow-hidden">
+
+  <div id="root"></div>
+
+  <!-- React App Script -->
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+    const { motion, AnimatePresence } = FramerMotion;
+
+    // --- DATA ---
+    const BLOG_URL = 'https://ankitstudypoint.blogspot.com';
+    const YOUTUBE_RAW_URL = 'https://youtube.com/@rxvibeak';
+    
+    const LOCAL_QUIZZES = [
+      {
+        id: 'pharma-1',
+        title: 'Pharmacology Basics',
+        description: 'Test your knowledge on drug actions and mechanisms.',
+        questions: [
+          {
+            question: 'Which of the following is a beta-blocker?',
+            options: ['Amlodipine', 'Atenolol', 'Lisinopril', 'Furosemide'],
+            correctAnswer: 1,
+            explanation: 'Atenolol is a selective beta-1 receptor antagonist used to treat hypertension.'
+          },
+          {
+            question: 'What is the primary site of drug metabolism?',
+            options: ['Kidneys', 'Lungs', 'Liver', 'Intestines'],
+            correctAnswer: 2,
+            explanation: 'The liver is the main organ responsible for the metabolic breakdown of drugs.'
+          }
+        ]
+      },
+      {
+        id: 'pharmaceutics-1',
+        title: 'Pharmaceutics & Dosage Forms',
+        description: 'Questions about tablets, capsules, and drug delivery.',
+        questions: [
+          {
+            question: 'Which tablet coating is designed to dissolve in the small intestine?',
+            options: ['Sugar coating', 'Film coating', 'Enteric coating', 'Gelatin coating'],
+            correctAnswer: 2,
+            explanation: 'Enteric coating protects the drug from stomach acid and ensures it dissolves in the alkaline environment of the intestine.'
+          }
+        ]
+      }
+    ];
+
+    // --- COMPONENTS ---
+
+    const Icon = ({ name, className }) => {
+      useEffect(() => {
+        lucide.createIcons();
+      }, [name]);
+      return <i data-lucide={name} className={className}></i>;
+    };
+
+    const Splash = ({ onComplete }) => {
+      useEffect(() => {
+        const timer = setTimeout(onComplete, 3000);
+        return () => clearTimeout(timer);
+      }, []);
+
+      return (
+        <div className="fixed inset-0 z-[9999] bg-gradient-to-br from-primary via-blue-600 to-accent flex flex-col items-center justify-center">
+          <div className="w-24 h-24 bg-white/20 rounded-[2rem] flex items-center justify-center mb-6 shadow-2xl splash-pop">
+            <Icon name="pill" className="w-12 h-12 text-white" />
+          </div>
+          <h1 className="text-3xl font-bold text-white tracking-tight">Ankit Study Point</h1>
+          <p className="text-white/70 mt-2 font-medium">🎓 Pharmacy Education Hub</p>
+          <div className="mt-12 w-48 h-1 bg-white/20 rounded-full overflow-hidden">
+            <div className="h-full bg-white loader-fill"></div>
+          </div>
+        </div>
+      );
+    };
+
+    const LocalQuiz = ({ onBack }) => {
+      const [selectedCategory, setSelectedCategory] = useState(null);
+      const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+      const [score, setScore] = useState(0);
+      const [showResult, setShowResult] = useState(false);
+      const [selectedOption, setSelectedOption] = useState(null);
+      const [isAnswered, setIsAnswered] = useState(false);
+
+      const currentCategory = LOCAL_QUIZZES.find(c => c.id === selectedCategory);
+      const currentQuestion = currentCategory?.questions[currentQuestionIndex];
+
+      const handleCategorySelect = (id) => {
+        setSelectedCategory(id);
+        setCurrentQuestionIndex(0);
+        setScore(0);
+        setShowResult(false);
+        setSelectedOption(null);
+        setIsAnswered(false);
+      };
+
+      const handleOptionSelect = (index) => {
+        if (isAnswered) return;
+        setSelectedOption(index);
+        setIsAnswered(true);
+        if (index === currentQuestion?.correctAnswer) setScore(score + 1);
+      };
+
+      const handleNext = () => {
+        if (currentQuestionIndex < currentCategory.questions.length - 1) {
+          setCurrentQuestionIndex(currentQuestionIndex + 1);
+          setSelectedOption(null);
+          setIsAnswered(false);
+        } else {
+          setShowResult(true);
+        }
+      };
+
+      if (!selectedCategory) {
+        return (
+          <div className="p-6 space-y-6">
+            <div className="bg-primary rounded-3xl p-8 text-white shadow-xl">
+              <h2 className="text-3xl font-bold">Local Quizzes</h2>
+              <p className="opacity-80 mt-2">Test your knowledge offline with these built-in pharmacy quizzes.</p>
+            </div>
+            <div className="grid gap-4">
+              {LOCAL_QUIZZES.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => handleCategorySelect(category.id)}
+                  className="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-all text-left flex items-center justify-between group"
+                >
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-800 dark:text-white">{category.title}</h3>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{category.description}</p>
+                    <p className="text-primary dark:text-blue-400 text-xs font-bold mt-3 uppercase tracking-wider">
+                      {category.questions.length} Questions
+                    </p>
+                  </div>
+                  <Icon name="chevron-right" className="w-6 h-6 text-gray-300 group-hover:text-primary transition-colors" />
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      }
+
+      if (showResult) {
+        const percentage = Math.round((score / currentCategory.questions.length) * 100);
+        return (
+          <div className="p-6 flex flex-col items-center justify-center min-h-[60vh] text-center">
+            <div className="bg-white dark:bg-gray-800 p-10 rounded-[3rem] shadow-2xl w-full max-w-md border border-gray-100 dark:border-gray-700">
+              <div className="w-24 h-24 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Icon name="trophy" className="w-12 h-12 text-yellow-600" />
+              </div>
+              <h2 className="text-3xl font-bold text-gray-800 dark:text-white">Quiz Completed!</h2>
+              <p className="text-gray-500 dark:text-gray-400 mt-2">You scored</p>
+              <div className="text-6xl font-black text-primary my-6">{percentage}%</div>
+              <p className="text-gray-600 dark:text-gray-300 font-medium">
+                {score} out of {currentCategory.questions.length} correct
+              </p>
+              <div className="flex gap-4 mt-10">
+                <button
+                  onClick={() => handleCategorySelect(selectedCategory)}
+                  className="flex-1 py-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-2xl font-bold flex items-center justify-center gap-2"
+                >
+                  <Icon name="rotate-ccw" className="w-5 h-5" /> Retry
+                </button>
+                <button
+                  onClick={() => setSelectedCategory(null)}
+                  className="flex-1 py-4 bg-primary text-white rounded-2xl font-bold flex items-center justify-center gap-2"
+                >
+                  <Icon name="layout-grid" className="w-5 h-5" /> Categories
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className="p-6 max-w-2xl mx-auto">
+          <div className="flex items-center justify-between mb-8">
+            <button onClick={() => setSelectedCategory(null)} className="text-gray-500 hover:text-gray-800 dark:hover:text-white">
+              <Icon name="chevron-left" className="w-6 h-6" />
+            </button>
+            <div className="text-sm font-bold text-gray-400 uppercase tracking-widest">
+              Question {currentQuestionIndex + 1} / {currentCategory.questions.length}
+            </div>
+            <div className="w-6" />
+          </div>
+
+          <div className="mb-8 h-2 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-primary transition-all duration-500" 
+              style={{ width: `${((currentQuestionIndex + 1) / currentCategory.questions.length) * 100}%` }}
+            ></div>
+          </div>
+
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-8 leading-tight">
+            {currentQuestion.question}
+          </h2>
+
+          <div className="space-y-4">
+            {currentQuestion.options.map((option, index) => {
+              const isCorrect = index === currentQuestion.correctAnswer;
+              const isSelected = index === selectedOption;
+              let stateClass = "bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 text-gray-700 dark:text-gray-300";
+              if (isAnswered) {
+                if (isCorrect) stateClass = "bg-green-50 dark:bg-green-900/20 border-green-500 text-green-700 dark:text-green-400";
+                else if (isSelected) stateClass = "bg-red-50 dark:bg-red-900/20 border-red-500 text-red-700 dark:text-red-400";
+              } else if (isSelected) {
+                stateClass = "border-primary bg-blue-50 dark:bg-blue-900/20 text-primary dark:text-blue-400";
+              }
+              return (
+                <button
+                  key={index}
+                  onClick={() => handleOptionSelect(index)}
+                  disabled={isAnswered}
+                  className={`w-full p-5 rounded-2xl border-2 text-left font-bold transition-all flex items-center justify-between ${stateClass}`}
+                >
+                  <span>{option}</span>
+                  {isAnswered && isCorrect && <Icon name="check-circle-2" className="w-6 h-6 text-green-500" />}
+                  {isAnswered && isSelected && !isCorrect && <Icon name="x-circle" className="w-6 h-6 text-red-500" />}
+                </button>
+              );
+            })}
+          </div>
+
+          {isAnswered && (
+            <div className="mt-8">
+              {currentQuestion.explanation && (
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-5 rounded-2xl border border-blue-100 dark:border-blue-800 text-blue-800 dark:text-blue-300 text-sm mb-6">
+                  <span className="font-bold block mb-1">Explanation:</span>
+                  {currentQuestion.explanation}
+                </div>
+              )}
+              <button
+                onClick={handleNext}
+                className="w-full py-5 bg-primary text-white rounded-2xl font-bold shadow-lg flex items-center justify-center gap-2 hover:bg-blue-700 transition-all"
+              >
+                {currentQuestionIndex < currentCategory.questions.length - 1 ? 'Next Question' : 'Finish Quiz'}
+                <Icon name="chevron-right" className="w-5 h-5" />
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    // --- MAIN APP ---
+
+    const App = () => {
+      const [showSplash, setShowSplash] = useState(true);
+      const [activeTab, setActiveTab] = useState('home');
+      const [isDarkMode, setIsDarkMode] = useState(localStorage.getItem('theme') === 'dark');
+      const [currentUrl, setCurrentUrl] = useState(BLOG_URL + '/?m=1');
+      const [isLoading, setIsLoading] = useState(true);
+      const [isOffline, setIsOffline] = useState(!navigator.onLine);
+      const [showInstallBtn, setShowInstallBtn] = useState(false);
+      const [deferredPrompt, setDeferredPrompt] = useState(null);
+
+      useEffect(() => {
+        if (isDarkMode) document.documentElement.classList.add('dark');
+        else document.documentElement.classList.remove('dark');
+        
+        window.addEventListener('online', () => setIsOffline(false));
+        window.addEventListener('offline', () => setIsOffline(true));
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+          e.preventDefault();
+          setDeferredPrompt(e);
+          setShowInstallBtn(true);
+        });
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.register('./service-worker.js');
+        }
+      }, [isDarkMode]);
+
+      const toggleDarkMode = () => {
+        const newMode = !isDarkMode;
+        setIsDarkMode(newMode);
+        localStorage.setItem('theme', newMode ? 'dark' : 'light');
+      };
+
+      const handleNavigate = (tab) => {
+        setActiveTab(tab);
+        if (tab === 'home') setCurrentUrl(BLOG_URL + '/?m=1');
+        else if (tab === 'notes') setCurrentUrl(BLOG_URL + '/search/label/Notes?m=1');
+        else if (tab === 'tools') setCurrentUrl(BLOG_URL + '/p/pharma-tool.html?m=1');
+        else if (tab === 'youtube') setCurrentUrl(YOUTUBE_RAW_URL);
+      };
+
+      const handleInstall = async () => {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          if (outcome === 'accepted') setShowInstallBtn(false);
+          setDeferredPrompt(null);
+        }
+      };
+
+      if (showSplash) return <Splash onComplete={() => setShowSplash(false)} />;
+
+      return (
+        <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+          {/* Header */}
+          <header className="h-16 bg-primary dark:bg-blue-800 flex items-center px-4 gap-3 shadow-lg z-50 relative">
+            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+              <Icon name="pill" className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <h1 className="text-white font-bold text-lg leading-none">Ankit Study Point</h1>
+              <p className="text-white/60 text-[10px] uppercase tracking-widest mt-1">Pharmacy Hub</p>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={toggleDarkMode} className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-white hover:bg-white/20">
+                <Icon name={isDarkMode ? 'sun' : 'moon'} className="w-5 h-5" />
+              </button>
+              <button onClick={() => setCurrentUrl(BLOG_URL + '/?m=1')} className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-white hover:bg-white/20">
+                <Icon name="rotate-ccw" className="w-5 h-5" />
+              </button>
+              {showInstallBtn && (
+                <button onClick={handleInstall} className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center text-white animate-bounce">
+                  <Icon name="download" className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+          </header>
+
+          {/* Content */}
+          <main className="flex-1 relative overflow-hidden">
+            <AnimatePresence mode="wait">
+              {isOffline ? (
+                <motion.div key="offline" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-white dark:bg-gray-900">
+                  <Icon name="wifi-off" className="w-20 h-20 text-gray-300 mb-6" />
+                  <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Aap Offline Hain</h2>
+                  <p className="text-gray-500 mt-2">Kripaya internet check karein aur refresh karein.</p>
+                  <button onClick={() => window.location.reload()} className="mt-8 px-8 py-3 bg-primary text-white rounded-2xl font-bold">Try Again</button>
+                </motion.div>
+              ) : activeTab === 'quiz' ? (
+                <motion.div key="quiz" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="absolute inset-0 overflow-y-auto pb-24">
+                  <LocalQuiz />
+                </motion.div>
+              ) : (
+                <motion.div key="webview" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 pb-20">
+                  {isLoading && (
+                    <div className="absolute inset-0 bg-white dark:bg-gray-900 flex items-center justify-center z-10">
+                      <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                  )}
+                  <iframe 
+                    src={currentUrl} 
+                    className="w-full h-full border-none"
+                    onLoad={() => setIsLoading(false)}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </main>
+
+          {/* Bottom Nav */}
+          <nav className="h-20 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 flex items-center px-2 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-50">
+            {[
+              { id: 'home', icon: 'home', label: 'Home' },
+              { id: 'notes', icon: 'book-open', label: 'Notes' },
+              { id: 'quiz', icon: 'gamepad-2', label: 'Quiz' },
+              { id: 'tools', icon: 'wrench', label: 'Tools' },
+              { id: 'youtube', icon: 'youtube', label: 'YouTube' }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => handleNavigate(tab.id)}
+                className={`flex-1 flex flex-col items-center justify-center gap-1 transition-all ${activeTab === tab.id ? 'text-primary' : 'text-gray-400'}`}
+              >
+                <div className={`p-2 rounded-2xl transition-all ${activeTab === tab.id ? 'bg-blue-50 dark:bg-blue-900/30' : ''}`}>
+                  <Icon name={tab.icon} className="w-6 h-6" />
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-wider">{tab.label}</span>
+              </button>
+            ))}
+          </nav>
+        </div>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
