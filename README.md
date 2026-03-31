@@ -22,12 +22,32 @@ A modern, fast, and mobile-friendly educational application for pharmacy student
 - This app is built using **React (JavaScript)**, which is perfectly supported by GitHub.
 - You do **not** need a `service.js` file manually; the build process (`npm run build`) creates a `sw.js` (Service Worker) automatically for the "Install" feature.
 
-## GitHub Deployment Checklist
-To make the app work on your link:
-1. **Build the app:** Run `npm run build`.
-2. **The `dist` folder:** After building, a folder named `dist` is created.
-3. **Upload `dist` contents:** You must upload the **contents** of the `dist` folder to your GitHub repository.
-4. **Base Path:** I have already set the base path to `/AnkitstudyPoint-app-2/` in `vite.config.ts`. Ensure your repository name matches this exactly.
+## 🚀 GitHub Pages Deployment Guide (Fix for Blank Screen)
+
+If your app is showing a blank screen on GitHub Pages, it's because you are deploying the **source code** instead of the **built files**. 
+
+### 🛠️ Step-by-Step Fix:
+
+1.  **Push the latest code:** Make sure your GitHub repository has all the files, including the `.github/` folder I just created.
+2.  **Go to your GitHub Repository Settings:**
+    *   Click on **Settings** (the gear icon ⚙️ at the top).
+    *   On the left sidebar, click on **Pages**.
+3.  **Change the Build and Deployment Source:**
+    *   Under **Build and deployment** > **Source**, you will see a dropdown that says "Deploy from a branch".
+    *   **CHANGE THIS** to **"GitHub Actions"**. (This is the most important step!)
+4.  **Check the Actions Tab:**
+    *   Click on the **Actions** tab at the top of your repository.
+    *   You will see a workflow named "Deploy to GitHub Pages" running.
+    *   Wait for it to turn **Green** (Success).
+5.  **Open your site:**
+    *   Once the Action is green, go back to the **Pages** settings.
+    *   You will see a link like `https://ankitkushwahaji938-hub.github.io/AnkitstudyPoint-app-2/`.
+    *   Click it, and your app will load perfectly!
+
+---
+
+### ❓ Why was it blank before?
+GitHub Pages cannot run `.tsx` or React files directly. It needs the "built" version (HTML/JS) which is inside the `dist` folder. The **GitHub Action** I set up automatically builds your app and deploys only the correct files for you.
 
 ## Why did a "Temple" site open?
 The "Sora Templates" site you saw is likely a link or redirect inside your Blogger template. I have added a **"Home Reset" (Rotate icon)** button in the top header. If you ever get lost or a different site opens, just click that button to return to your main blog immediately.
