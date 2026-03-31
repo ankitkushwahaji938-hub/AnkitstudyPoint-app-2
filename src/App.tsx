@@ -1,340 +1,182 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Home,
-  BookOpen,
-  Gamepad2,
-  Wrench,
-  Timer,
-  ChevronLeft,
-  ChevronRight,
-  Check,
-  AlertCircle
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Home, 
+  BookOpen, 
+  Gamepad2, 
+  Wrench, 
+  Youtube, 
+  Timer, 
+  Bookmark, 
+  Share2, 
+  ChevronLeft, 
+  ChevronRight, 
+  RotateCcw,
+  X,
+  Menu,
+  Bell,
+  Search,
+  Plus,
+  Star,
+  Download,
+  Info,
+  Calendar,
+  Droplets,
+  Pill,
+  LayoutGrid,
+  FlaskConical,
+  Activity
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils';
+import { PHARMA_TOOLS, BLOG_URL, QUIZ_URL, TIMER_URL, YOUTUBE_RAW_URL, ABOUT_URL } from './constants';
+import { TabType, Bookmark as BookmarkType } from './types';
+import LocalQuiz from './components/LocalQuiz';
 
-// Data Types
-type TabType = 'home' | 'notes' | 'quiz' | 'tools' | 'timer';
+const IconMap: Record<string, React.ReactNode> = {
+  Calendar: <Calendar className="w-5 h-5" />,
+  Droplets: <Droplets className="w-5 h-5" />,
+  Pill: <Pill className="w-5 h-5" />,
+  LayoutGrid: <LayoutGrid className="w-5 h-5" />,
+  FlaskConical: <FlaskConical className="w-5 h-5" />,
+  Search: <Search className="w-5 h-5" />,
+  Activity: <Activity className="w-5 h-5" />
+};
 
-interface Quiz {
-  id: string;
-  question: string;
-  options: string[];
-  correctAnswer: number;
-  explanation: string;
-}
-
-// Built-in Quiz Data
-const QUIZZES: Quiz[] = [
-  {
-    id: '1',
-    question: 'What is the therapeutic effect of Paracetamol?',
-    options: ['Antibiotic', 'Antipyretic & Analgesic', 'Antihistamine', 'Anticoagulant'],
-    correctAnswer: 1,
-    explanation: 'Paracetamol works as an antipyretic (fever reducer) and analgesic (pain reliever).'
-  },
-  {
-    id: '2',
-    question: 'What is the normal IV drip rate in drops per minute?',
-    options: ['10-20 drops/min', '20-30 drops/min', '30-50 drops/min', '50-100 drops/min'],
-    correctAnswer: 2,
-    explanation: 'The normal IV drip rate is typically 30-50 drops per minute depending on the IV set.'
-  },
-  {
-    id: '3',
-    question: 'Which drug is used for blood pressure control?',
-    options: ['Aspirin', 'Amlodipine', 'Ibuprofen', 'Omeprazole'],
-    correctAnswer: 1,
-    explanation: 'Amlodipine is a calcium channel blocker used to treat hypertension.'
-  },
-  {
-    id: '4',
-    question: 'What does NSAID stand for?',
-    options: ['Non-Steroidal Anti-Inflammatory Drug', 'Non-Structural Anti-Immune Disease', 'Non-Stimulant Anti-Infective Drug', 'None of above'],
-    correctAnswer: 0,
-    explanation: 'NSAID = Non-Steroidal Anti-Inflammatory Drug. Examples: Ibuprofen, Diclofenac.'
-  },
-  {
-    id: '5',
-    question: 'What is the recommended dose of Amoxicillin for adults?',
-    options: ['250-500mg once daily', '250-500mg three times daily', '1-2g daily', '5g daily'],
-    correctAnswer: 1,
-    explanation: 'Amoxicillin is usually prescribed 250-500mg three times daily for bacterial infections.'
-  }
-];
-
-// Built-in Study Notes
-const STUDY_NOTES = [
-  {
-    title: 'Basic Pharmacology',
-    content: `Basic Pharmacology - Important Concepts
-
-1. Definition
-Pharmacology is the science dealing with drugs and their actions on the body.
-
-2. Branches
-- Pharmacodynamics: What drug does to body
-- Pharmacokinetics: What body does to drug
-
-3. Drug Administration Routes
-- Oral (PO) - Most common
-- Intramuscular (IM)
-- Intravenous (IV)
-- Topical
-- Rectal
-
-4. Side Effects vs Adverse Reactions
-- Side effects are predictable
-- Adverse reactions are unexpected harmful effects
-
-5. Drug Interactions
-Important when patient takes multiple drugs`
-  },
-  {
-    title: 'Common Antibiotics',
-    content: `Important Antibiotics for Pharmacy Students
-
-1. Penicillins
-- Amoxicillin, Ampicillin
-- Beta-lactam antibiotics
-- Good for bacteria
-
-2. Cephalosporins
-- Ceftriaxone
-- Similar to penicillins
-- Used for serious infections
-
-3. Macrolides
-- Erythromycin
-- Used for respiratory infections
-- Better absorption
-
-4. Fluoroquinolones
-- Ciprofloxacin
-- Broad spectrum
-- Used for UTIs and respiratory infections`
-  }
-];
-
-// Built-in Tools
-interface Tool {
-  id: string;
-  title: string;
-  description: string;
-}
-
-const PHARMA_TOOLS: Tool[] = [
-  {
-    id: 'bmi',
-    title: 'BMI Calculator',
-    description: 'Calculate Body Mass Index'
-  },
-  {
-    id: 'iv-drip',
-    title: 'IV Drip Calculator',
-    description: 'Calculate drops per minute'
-  },
-  {
-    id: 'dose',
-    title: 'Dose Calculator',
-    description: 'Calculate medication dose'
-  }
-];
-
-// Tool Calculators
-function BMICalculator() {
-  const [weight, setWeight] = useState('');
-  const [height, setHeight] = useState('');
-  const [bmi, setBmi] = useState<number | null>(null);
-
-  const calculateBMI = () => {
-    if (weight && height) {
-      const w = parseFloat(weight);
-      const h = parseFloat(height) / 100;
-      const result = w / (h * h);
-      setBmi(Math.round(result * 10) / 10);
-    }
-  };
-
-  const getBMICategory = (value: number) => {
-    if (value < 18.5) return 'Underweight';
-    if (value < 25) return 'Normal Weight';
-    if (value < 30) return 'Overweight';
-    return 'Obese';
-  };
-
-  return (
-    <div className="space-y-4">
-      <input
-        type="number"
-        placeholder="Weight (kg)"
-        value={weight}
-        onChange={(e) => setWeight(e.target.value)}
-        className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-      />
-      <input
-        type="number"
-        placeholder="Height (cm)"
-        value={height}
-        onChange={(e) => setHeight(e.target.value)}
-        className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-      />
-      <button
-        onClick={calculateBMI}
-        className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700"
-      >
-        Calculate BMI
-      </button>
-      {bmi && (
-        <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-          <p className="text-2xl font-bold text-blue-600">{bmi}</p>
-          <p className="text-gray-600 dark:text-gray-300">{getBMICategory(bmi)}</p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function IVDripCalculator() {
-  const [volume, setVolume] = useState('');
-  const [time, setTime] = useState('');
-  const [dropFactor, setDropFactor] = useState('15');
-  const [result, setResult] = useState<number | null>(null);
-
-  const calculate = () => {
-    if (volume && time && dropFactor) {
-      const drops = (parseFloat(volume) * parseFloat(dropFactor)) / parseFloat(time);
-      setResult(Math.round(drops * 10) / 10);
-    }
-  };
-
-  return (
-    <div className="space-y-4">
-      <input
-        type="number"
-        placeholder="Volume (mL)"
-        value={volume}
-        onChange={(e) => setVolume(e.target.value)}
-        className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-      />
-      <input
-        type="number"
-        placeholder="Time (minutes)"
-        value={time}
-        onChange={(e) => setTime(e.target.value)}
-        className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-      />
-      <select
-        value={dropFactor}
-        onChange={(e) => setDropFactor(e.target.value)}
-        className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-      >
-        <option value="10">10 drops/mL (Macro)</option>
-        <option value="15">15 drops/mL (Standard)</option>
-        <option value="20">20 drops/mL (Macro)</option>
-        <option value="60">60 drops/mL (Micro)</option>
-      </select>
-      <button
-        onClick={calculate}
-        className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700"
-      >
-        Calculate
-      </button>
-      {result && (
-        <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
-          <p className="text-2xl font-bold text-green-600">{result} drops/min</p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function DoseCalculator() {
-  const [concentration, setConcentration] = useState('');
-  const [dose, setDose] = useState('');
-  const [result, setResult] = useState<number | null>(null);
-
-  const calculate = () => {
-    if (concentration && dose) {
-      const volume = parseFloat(dose) / parseFloat(concentration);
-      setResult(Math.round(volume * 100) / 100);
-    }
-  };
-
-  return (
-    <div className="space-y-4">
-      <input
-        type="number"
-        placeholder="Concentration (mg/mL)"
-        value={concentration}
-        onChange={(e) => setConcentration(e.target.value)}
-        className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-      />
-      <input
-        type="number"
-        placeholder="Required Dose (mg)"
-        value={dose}
-        onChange={(e) => setDose(e.target.value)}
-        className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-      />
-      <button
-        onClick={calculate}
-        className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700"
-      >
-        Calculate
-      </button>
-      {result && (
-        <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
-          <p className="text-2xl font-bold text-purple-600">{result} mL</p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Main App
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabType>('home');
+  const [currentUrl, setCurrentUrl] = useState(BLOG_URL);
+  const [isLoading, setIsLoading] = useState(true);
   const [showSplash, setShowSplash] = useState(true);
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [selectedQuiz, setSelectedQuiz] = useState<string | null>(null);
-  const [quizAnswers, setQuizAnswers] = useState<Record<string, number>>({});
-  const [quizSubmitted, setQuizSubmitted] = useState(false);
-  const [selectedTool, setSelectedTool] = useState<string | null>(null);
-  const [timerSeconds, setTimerSeconds] = useState(0);
-  const [timerRunning, setTimerRunning] = useState(false);
+  const [bookmarks, setBookmarks] = useState<BookmarkType[]>([]);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [progress, setProgress] = useState(0);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallBtn, setShowInstallBtn] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(localStorage.getItem('theme') === 'dark');
+  
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
+  // Initialize
   useEffect(() => {
     const timer = setTimeout(() => setShowSplash(false), 2500);
-    return () => clearTimeout(timer);
-  }, []);
+    const savedBookmarks = localStorage.getItem('bookmarks');
+    if (savedBookmarks) setBookmarks(JSON.parse(savedBookmarks));
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (timerRunning && timerSeconds > 0) {
-      interval = setInterval(() => {
-        setTimerSeconds(s => s - 1);
-      }, 1000);
-    } else if (timerSeconds === 0 && timerRunning) {
-      setTimerRunning(false);
-      alert('Study time completed! Take a break! 📚');
+    window.addEventListener('online', () => setIsOffline(false));
+    window.addEventListener('offline', () => setIsOffline(true));
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBtn(true);
+    });
+
+    window.addEventListener('appinstalled', () => {
+      setShowInstallBtn(false);
+      setDeferredPrompt(null);
+    });
+
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
     }
-    return () => clearInterval(interval);
-  }, [timerRunning, timerSeconds]);
 
-  const formatTime = (seconds: number) => {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    return () => clearTimeout(timer);
+  }, [isDarkMode]);
+
+  const toggleDarkMode = () => {
+    const newMode = !isDarkMode;
+    setIsDarkMode(newMode);
+    localStorage.setItem('theme', newMode ? 'dark' : 'light');
+  };
+
+  const handleInstall = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setShowInstallBtn(false);
+    }
+    setDeferredPrompt(null);
+  };
+
+  // Handle URL changes based on tab
+  useEffect(() => {
+    setIsLoading(true);
+    setProgress(10);
+    switch (activeTab) {
+      case 'home': setCurrentUrl(BLOG_URL); break;
+      case 'notes': setCurrentUrl(`${BLOG_URL}search/label/Notes`); break;
+      case 'quiz': break; // Handled by LocalQuiz component
+      case 'tools': setCurrentUrl(PHARMA_TOOLS[3].url); break; // Tools Hub
+      case 'youtube': setCurrentUrl(YOUTUBE_RAW_URL); break;
+      case 'timer': setCurrentUrl(TIMER_URL); break;
+    }
+  }, [activeTab]);
+
+  const handleIframeLoad = () => {
+    setIsLoading(false);
+    setProgress(100);
+    setTimeout(() => setProgress(0), 500);
+  };
+
+  const toggleBookmark = () => {
+    const newBookmark: BookmarkType = {
+      id: Date.now().toString(),
+      title: "Page " + currentUrl.split('/').pop(),
+      url: currentUrl,
+      timestamp: Date.now()
+    };
+
+    const exists = bookmarks.find(b => b.url === currentUrl);
+    let updated;
+    if (exists) {
+      updated = bookmarks.filter(b => b.url !== currentUrl);
+    } else {
+      updated = [...bookmarks, newBookmark];
+    }
+    setBookmarks(updated);
+    localStorage.setItem('bookmarks', JSON.stringify(updated));
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: 'Ankit Study Point',
+        text: 'Check out this educational resource!',
+        url: currentUrl,
+      });
+    } else {
+      navigator.clipboard.writeText(currentUrl);
+      alert('Link copied to clipboard!');
+    }
+  };
+
+  const goBack = () => {
+    if (iframeRef.current) {
+      // In a real WebView this would be different, but for iframe we try
+      try {
+        window.history.back();
+      } catch (e) {
+        setShowExitConfirm(true);
+      }
+    }
   };
 
   if (showSplash) {
     return (
-      <div className="fixed inset-0 bg-white dark:bg-gray-900 flex flex-col items-center justify-center z-50">
+      <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-50">
         <motion.div 
           initial={{ scale: 0.5, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.5 }}
           className="w-32 h-32 bg-blue-600 rounded-3xl flex items-center justify-center shadow-2xl mb-6"
         >
           <BookOpen className="w-16 h-16 text-white" />
@@ -343,268 +185,315 @@ export default function App() {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="text-2xl font-bold text-gray-800 dark:text-white"
+          className="text-2xl font-bold text-gray-800"
         >
           Ankit Study Point
         </motion.h1>
+        <motion.p 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6 }}
+          className="text-gray-500 mt-2"
+        >
+          Your Complete Study Platform
+        </motion.p>
+        <div className="absolute bottom-12 w-48 h-1 bg-gray-100 rounded-full overflow-hidden">
+          <motion.div 
+            initial={{ x: '-100%' }}
+            animate={{ x: '100%' }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+            className="w-full h-full bg-blue-600"
+          />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
+    <div className={cn("flex flex-col h-screen bg-gray-50 font-sans overflow-hidden transition-colors duration-300", isDarkMode && "dark bg-gray-900")}>
       {/* Header */}
-      <header className="bg-blue-600 text-white px-4 py-3 flex items-center justify-between z-20">
-        <h1 className="text-xl font-bold">Ankit Study Point</h1>
-        <button
-          onClick={() => setIsDarkMode(!isDarkMode)}
-          className="p-2 hover:bg-blue-700 rounded-lg transition"
-        >
-          {isDarkMode ? '☀️' : '🌙'}
-        </button>
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between z-30 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+            <BookOpen className="w-5 h-5 text-white" />
+          </div>
+          <h1 className="font-bold text-lg text-gray-800 dark:text-white truncate max-w-[120px]">
+            {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+          </h1>
+        </div>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button 
+            onClick={toggleDarkMode}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+            title="Toggle Dark Mode"
+          >
+            {isDarkMode ? <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" /> : <Star className="w-5 h-5 text-gray-500" />}
+          </button>
+          <button 
+            onClick={() => {
+              setCurrentUrl(BLOG_URL);
+              setActiveTab('home');
+              if (iframeRef.current) iframeRef.current.src = BLOG_URL;
+            }}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+            title="Go to Home"
+          >
+            <RotateCcw className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          </button>
+          {showInstallBtn && (
+            <button 
+              onClick={handleInstall}
+              className="hidden sm:flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-full shadow-md hover:bg-blue-700 transition-all"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Install
+            </button>
+          )}
+          <button onClick={toggleBookmark} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors">
+            <Bookmark className={cn("w-5 h-5", bookmarks.find(b => b.url === currentUrl) ? "fill-blue-600 text-blue-600" : "text-gray-500 dark:text-gray-400")} />
+          </button>
+          <button onClick={handleShare} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors">
+            <Share2 className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          </button>
+        </div>
       </header>
 
+      {/* Progress Bar */}
+      {progress > 0 && (
+        <div className="h-1 w-full bg-gray-100 absolute top-[57px] z-40">
+          <motion.div 
+            initial={{ width: 0 }}
+            animate={{ width: `${progress}%` }}
+            className="h-full bg-blue-600"
+          />
+        </div>
+      )}
+
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto pb-20">
+      <main className="flex-1 relative overflow-hidden">
         <AnimatePresence mode="wait">
-          {activeTab === 'home' && (
-            <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-4 space-y-4">
-              <div className="bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-2xl p-6">
-                <h2 className="text-2xl font-bold mb-2">Welcome! 👋</h2>
-                <p className="opacity-90">Master pharmacy concepts here.</p>
+          {isOffline ? (
+            <motion.div 
+              key="offline"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-white dark:bg-gray-900 z-20"
+            >
+              <div className="w-20 h-20 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
+                <Activity className="w-10 h-10 text-red-500" />
               </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setActiveTab('quiz')}
-                  className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border-l-4 border-purple-500"
-                >
-                  <p className="text-sm font-bold dark:text-white">📝 Quizzes</p>
-                </motion.button>
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setActiveTab('tools')}
-                  className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border-l-4 border-green-500"
-                >
-                  <p className="text-sm font-bold dark:text-white">🔧 Tools</p>
-                </motion.button>
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setActiveTab('notes')}
-                  className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border-l-4 border-blue-500"
-                >
-                  <p className="text-sm font-bold dark:text-white">📚 Notes</p>
-                </motion.button>
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setActiveTab('timer')}
-                  className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border-l-4 border-red-500"
-                >
-                  <p className="text-sm font-bold dark:text-white">⏱️ Timer</p>
-                </motion.button>
+              <h2 className="text-xl font-bold text-gray-800 dark:text-white">No Internet Connection</h2>
+              <p className="text-gray-500 dark:text-gray-400 mt-2">Please check your connection and try again to access study materials.</p>
+              <button 
+                onClick={() => window.location.reload()}
+                className="mt-6 px-6 py-2 bg-blue-600 text-white rounded-full font-medium shadow-lg shadow-blue-200 dark:shadow-none"
+              >
+                Retry Connection
+              </button>
+            </motion.div>
+          ) : activeTab === 'youtube' ? (
+            <motion.div 
+              key="youtube-tab"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="absolute inset-0 flex flex-col items-center justify-center p-6 bg-white dark:bg-gray-900 text-center"
+            >
+              <div className="w-24 h-24 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-6">
+                <Youtube className="w-12 h-12 text-red-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Watch on YouTube</h2>
+              <p className="text-gray-500 dark:text-gray-400 mt-2 max-w-xs">
+                YouTube blocks direct embedding of channel pages for security. Click below to watch our latest educational videos.
+              </p>
+              <a 
+                href={YOUTUBE_RAW_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-8 px-8 py-4 bg-red-600 text-white rounded-2xl font-bold shadow-lg shadow-red-100 dark:shadow-none flex items-center gap-3 hover:bg-red-700 transition-all"
+              >
+                <Youtube className="w-6 h-6" />
+                Open @rxvibeak
+              </a>
+              <div className="mt-12 grid grid-cols-2 gap-4 w-full max-w-md">
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700">
+                  <p className="text-xs font-bold text-gray-400 uppercase">Subscribers</p>
+                  <p className="text-lg font-bold text-gray-800 dark:text-white">Join Us</p>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700">
+                  <p className="text-xs font-bold text-gray-400 uppercase">Content</p>
+                  <p className="text-lg font-bold text-gray-800 dark:text-white">Pharma Tips</p>
+                </div>
               </div>
             </motion.div>
-          )}
-
-          {activeTab === 'notes' && (
-            <motion.div key="notes" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-4 space-y-4">
-              <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Study Notes</h2>
-              {STUDY_NOTES.map((note, idx) => (
-                <motion.div
-                  key={idx}
-                  className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700"
-                >
-                  <h3 className="font-bold text-lg text-gray-800 dark:text-white mb-2">{note.title}</h3>
-                  <p className="text-gray-600 dark:text-gray-300 text-sm whitespace-pre-line line-clamp-4">{note.content}</p>
-                  <button className="mt-3 text-blue-600 text-sm font-semibold">Read More →</button>
-                </motion.div>
-              ))}
+          ) : activeTab === 'quiz' ? (
+            <motion.div 
+              key="local-quiz"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 overflow-y-auto bg-gray-50 dark:bg-gray-900 pb-24"
+            >
+              <LocalQuiz />
             </motion.div>
-          )}
-
-          {activeTab === 'quiz' && (
-            <motion.div key="quiz" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-4">
-              <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Pharmacy Quizzes</h2>
-              {selectedQuiz && !quizSubmitted ? (
-                <div className="space-y-4">
+          ) : activeTab === 'tools' ? (
+            <motion.div 
+              key="tools-grid"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="absolute inset-0 overflow-y-auto p-4 pb-24 bg-gray-50 dark:bg-gray-900"
+            >
+              <div className="grid grid-cols-1 gap-4">
+                <div className="bg-blue-600 rounded-2xl p-6 text-white mb-2 shadow-lg">
+                  <h2 className="text-2xl font-bold">Pharma Tools</h2>
+                  <p className="opacity-80 text-sm mt-1">Essential calculators and checkers for pharmacy students.</p>
+                </div>
+                {PHARMA_TOOLS.map((tool) => (
                   <button
-                    onClick={() => setSelectedQuiz(null)}
-                    className="text-blue-600 flex items-center gap-2 mb-4 dark:text-blue-400"
+                    key={tool.id}
+                    onClick={() => {
+                      setCurrentUrl(tool.url);
+                      setActiveTab('home'); // Switch to home to show the webview
+                    }}
+                    className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center gap-4 hover:border-blue-200 transition-all text-left group"
                   >
-                    <ChevronLeft className="w-4 h-4" /> Back
+                    <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                      {IconMap[tool.icon]}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-gray-800 dark:text-white">{tool.title}</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{tool.description}</p>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-gray-300 dark:text-gray-600" />
                   </button>
-                  {QUIZZES.map(quiz => {
-                    if (quiz.id !== selectedQuiz) return null;
-                    return (
-                      <div key={quiz.id} className="bg-white dark:bg-gray-800 p-6 rounded-xl">
-                        <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4">{quiz.question}</h3>
-                        <div className="space-y-3">
-                          {quiz.options.map((option, idx) => (
-                            <button
-                              key={idx}
-                              onClick={() => setQuizAnswers({ ...quizAnswers, [quiz.id]: idx })}
-                              className={cn(
-                                'w-full p-3 rounded-lg border-2 text-left font-semibold transition',
-                                quizAnswers[quiz.id] === idx
-                                  ? 'bg-blue-100 dark:bg-blue-900 border-blue-500'
-                                  : 'border-gray-200 dark:border-gray-700 dark:text-white'
-                              )}
-                            >
-                              {option}
-                            </button>
-                          ))}
-                        </div>
-                        <button
-                          onClick={() => setQuizSubmitted(true)}
-                          className="w-full mt-6 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700"
-                        >
-                          Submit Answer
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : quizSubmitted ? (
-                <div className="space-y-4">
-                  <button
-                    onClick={() => { setSelectedQuiz(null); setQuizSubmitted(false); setQuizAnswers({}); }}
-                    className="text-blue-600 flex items-center gap-2 mb-4 dark:text-blue-400"
-                  >
-                    <ChevronLeft className="w-4 h-4" /> Back
-                  </button>
-                  {QUIZZES.map(quiz => {
-                    if (quiz.id !== selectedQuiz) return null;
-                    const isCorrect = quizAnswers[quiz.id] === quiz.correctAnswer;
-                    return (
-                      <div key={quiz.id} className={cn(
-                        'p-6 rounded-xl',
-                        isCorrect ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20'
-                      )}>
-                        <div className="flex items-center gap-2 mb-3">
-                          {isCorrect ? (
-                            <Check className="w-6 h-6 text-green-600" />
-                          ) : (
-                            <AlertCircle className="w-6 h-6 text-red-600" />
-                          )}
-                          <span className={cn('font-bold text-lg', isCorrect ? 'text-green-600' : 'text-red-600')}>
-                            {isCorrect ? 'Correct! ✅' : 'Incorrect ❌'}
-                          </span>
-                        </div>
-                        <p className="text-gray-700 dark:text-gray-300"><strong>💡 Explanation:</strong> {quiz.explanation}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {QUIZZES.map((quiz) => (
-                    <motion.button
-                      key={quiz.id}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => setSelectedQuiz(quiz.id)}
-                      className="w-full bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 text-left hover:shadow-md transition dark:text-white"
-                    >
-                      <p className="font-semibold">{quiz.question.slice(0, 50)}...</p>
-                      <p className="text-xs text-gray-500 mt-1">Tap to attempt →</p>
-                    </motion.button>
-                  ))}
-                </div>
-              )}
+                ))}
+              </div>
             </motion.div>
-          )}
-
-          {activeTab === 'tools' && (
-            <motion.div key="tools" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-4">
-              <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Pharma Tools</h2>
-              {selectedTool ? (
-                <div className="space-y-4">
-                  <button
-                    onClick={() => setSelectedTool(null)}
-                    className="text-blue-600 flex items-center gap-2 dark:text-blue-400"
-                  >
-                    <ChevronLeft className="w-4 h-4" /> Back
-                  </button>
-                  <div className="bg-white dark:bg-gray-800 p-6 rounded-xl">
-                    {selectedTool === 'bmi' && <BMICalculator />}
-                    {selectedTool === 'iv-drip' && <IVDripCalculator />}
-                    {selectedTool === 'dose' && <DoseCalculator />}
+          ) : (
+            <div className="absolute inset-0 bg-white dark:bg-gray-900">
+              {isLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-white dark:bg-gray-900 z-10">
+                  <div className="flex flex-col items-center">
+                    <div className="w-10 h-10 border-4 border-blue-100 dark:border-gray-800 border-t-blue-600 rounded-full animate-spin"></div>
+                    <p className="text-xs text-gray-400 mt-3 font-medium">Loading content...</p>
                   </div>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  {PHARMA_TOOLS.map((tool) => (
-                    <motion.button
-                      key={tool.id}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => setSelectedTool(tool.id)}
-                      className="w-full bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 flex items-center justify-between hover:shadow-md transition dark:text-white"
-                    >
-                      <div className="text-left">
-                        <p className="font-semibold">{tool.title}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{tool.description}</p>
-                      </div>
-                      <ChevronRight className="w-5 h-5 text-gray-300" />
-                    </motion.button>
-                  ))}
-                </div>
               )}
-            </motion.div>
-          )}
-
-          {activeTab === 'timer' && (
-            <motion.div key="timer" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-4 flex flex-col items-center justify-center min-h-[60vh]">
-              <div className="text-center space-y-8">
-                <div className="text-7xl font-bold text-blue-600 font-mono dark:text-blue-400">{formatTime(timerSeconds)}</div>
-                <input
-                  type="number"
-                  placeholder="Minutes"
-                  min="1"
-                  max="120"
-                  disabled={timerRunning}
-                  onChange={(e) => setTimerSeconds(parseInt(e.target.value) * 60 || 0)}
-                  className="border px-4 py-2 rounded-lg text-center dark:bg-gray-800 dark:border-gray-700 dark:text-white w-40"
-                />
-                <button
-                  onClick={() => setTimerRunning(!timerRunning)}
-                  className={cn(
-                    'px-8 py-3 rounded-lg font-bold text-white transition',
-                    timerRunning ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'
-                  )}
-                >
-                  {timerRunning ? '⏸️ Stop' : '▶️ Start'}
-                </button>
-                {timerRunning && (
-                  <div className="text-sm text-gray-500 dark:text-gray-400">Keep studying! Focus on your pharmacy concepts.</div>
-                )}
-              </div>
-            </motion.div>
+              <iframe
+                ref={iframeRef}
+                src={currentUrl}
+                className="w-full h-full border-none"
+                onLoad={handleIframeLoad}
+                title="Content View"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
           )}
         </AnimatePresence>
+
+        {/* Floating Action Button */}
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={() => setActiveTab('timer')}
+          className="absolute bottom-6 right-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-xl flex items-center justify-center z-40"
+        >
+          <Timer className="w-7 h-7" />
+        </motion.button>
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex items-center justify-around z-30">
-        {[
-          { tab: 'home' as TabType, icon: '🏠', label: 'Home' },
-          { tab: 'notes' as TabType, icon: '📚', label: 'Notes' },
-          { tab: 'quiz' as TabType, icon: '📝', label: 'Quiz' },
-          { tab: 'tools' as TabType, icon: '🔧', label: 'Tools' },
-          { tab: 'timer' as TabType, icon: '⏱️', label: 'Timer' },
-        ].map(({ tab, icon, label }) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={cn(
-              'flex-1 py-3 flex flex-col items-center justify-center gap-1 transition',
-              activeTab === tab ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'
-            )}
-          >
-            <span className="text-xl">{icon}</span>
-            <span className="text-xs font-bold">{label}</span>
-          </button>
-        ))}
+      <nav className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-2 py-2 flex items-center justify-around z-30 shadow-[0_-4px_10px_rgba(0,0,0,0.03)]">
+        <NavButton 
+          active={activeTab === 'home'} 
+          onClick={() => setActiveTab('home')} 
+          icon={<Home className="w-6 h-6" />} 
+          label="Home" 
+          isDarkMode={isDarkMode}
+        />
+        <NavButton 
+          active={activeTab === 'notes'} 
+          onClick={() => setActiveTab('notes')} 
+          icon={<BookOpen className="w-6 h-6" />} 
+          label="Notes" 
+          isDarkMode={isDarkMode}
+        />
+        <NavButton 
+          active={activeTab === 'quiz'} 
+          onClick={() => setActiveTab('quiz')} 
+          icon={<Gamepad2 className="w-6 h-6" />} 
+          label="Quiz" 
+          isDarkMode={isDarkMode}
+        />
+        <NavButton 
+          active={activeTab === 'tools'} 
+          onClick={() => setActiveTab('tools')} 
+          icon={<Wrench className="w-6 h-6" />} 
+          label="Tools" 
+          isDarkMode={isDarkMode}
+        />
+        <NavButton 
+          active={activeTab === 'youtube'} 
+          onClick={() => setActiveTab('youtube')} 
+          icon={<Youtube className="w-6 h-6" />} 
+          label="YouTube" 
+          isDarkMode={isDarkMode}
+        />
       </nav>
+
+      {/* Exit Confirmation Modal */}
+      <AnimatePresence>
+        {showExitConfirm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6 backdrop-blur-sm">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white dark:bg-gray-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl"
+            >
+              <h3 className="text-xl font-bold text-gray-800 dark:text-white">Exit App?</h3>
+              <p className="text-gray-500 dark:text-gray-400 mt-2">Are you sure you want to close Ankit Study Point?</p>
+              <div className="flex gap-3 mt-6">
+                <button 
+                  onClick={() => setShowExitConfirm(false)}
+                  className="flex-1 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-2xl font-bold"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={() => window.close()}
+                  className="flex-1 py-3 bg-red-500 text-white rounded-2xl font-bold"
+                >
+                  Exit
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
+  );
+}
+
+function NavButton({ active, onClick, icon, label, isDarkMode }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string, isDarkMode: boolean }) {
+  return (
+    <button 
+      onClick={onClick}
+      className={cn(
+        "flex flex-col items-center justify-center gap-1 px-3 py-1 rounded-xl transition-all duration-300",
+        active ? "text-blue-600 scale-110" : "text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400"
+      )}
+    >
+      <div className={cn(
+        "p-1 rounded-lg transition-colors",
+        active ? "bg-blue-50 dark:bg-blue-900/30" : "bg-transparent"
+      )}>
+        {icon}
+      </div>
+      <span className="text-[10px] font-bold uppercase tracking-wider">{label}</span>
+    </button>
   );
 }
